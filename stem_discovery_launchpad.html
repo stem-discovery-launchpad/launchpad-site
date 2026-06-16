@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STEM Discovery Launchpad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Space Grotesk',sans-serif;background:#08080f;color:#e8e8f0;min-height:100vh;overflow-x:hidden;}
+canvas#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:0.3;pointer-events:none;}
+.shell{position:relative;z-index:2;}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:1.2rem 2rem;border-bottom:1px solid rgba(180,143,255,0.12);}
+.logo-wrap{display:flex;flex-direction:column;}
+.logo-name{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:#b48fff;letter-spacing:2px;}
+.logo-sub{font-size:10px;color:#5dca8a;letter-spacing:3px;font-family:'Space Mono',monospace;}
+.nav{display:flex;gap:4px;}
+.nav-btn{background:none;border:none;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;padding:8px 16px;border-radius:100px;cursor:pointer;color:#7c6fa0;transition:all 0.2s;}
+.nav-btn:hover{color:#e0d8f8;background:rgba(180,143,255,0.08);}
+.nav-btn.active{color:#b48fff;background:rgba(180,143,255,0.12);border:1px solid rgba(180,143,255,0.25);}
+.page{display:none;padding:2.5rem 2rem 4rem;max-width:780px;margin:0 auto;}
+.page.show{display:block;}
+.mono{font-family:'Space Mono',monospace;}
+.section-label{font-family:'Space Mono',monospace;font-size:11px;color:#5dca8a;letter-spacing:3px;text-transform:uppercase;margin-bottom:1.25rem;display:flex;align-items:center;gap:12px;}
+.section-label::after{content:'';flex:1;height:1px;background:rgba(93,202,138,0.2);}
+.hero-tag{font-family:'Space Mono',monospace;font-size:11px;color:#5dca8a;letter-spacing:3px;margin-bottom:1rem;}
+.hero-tag::before{content:'// ';}
+h1.big{font-size:clamp(2rem,4.5vw,3.2rem);font-weight:700;line-height:1.1;color:#f0eeff;margin-bottom:1.25rem;}
+h1.big span{color:#5dca8a;}
+.hero-desc{font-size:1rem;line-height:1.8;color:#a89fc0;max-width:540px;margin-bottom:2rem;}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(180,143,255,0.1);border:1px solid rgba(180,143,255,0.15);border-radius:12px;overflow:hidden;margin-bottom:3rem;}
+.stat{background:#0d0d17;padding:1.25rem;text-align:center;}
+.stat-n{font-family:'Space Mono',monospace;font-size:1.6rem;font-weight:700;color:#b48fff;display:block;}
+.stat-l{font-size:11px;color:#6b6080;letter-spacing:1px;}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:2.5rem;}
+.card{background:#0d0d17;border:1px solid rgba(93,202,138,0.12);border-radius:12px;padding:1.25rem;transition:border-color 0.25s,transform 0.25s;cursor:pointer;}
+.card:hover{border-color:rgba(93,202,138,0.4);transform:translateY(-2px);}
+.card-icon{font-size:22px;color:#5dca8a;margin-bottom:0.75rem;display:block;}
+.card h3{font-size:14px;font-weight:500;color:#e0d8f8;margin-bottom:6px;}
+.card p{font-size:12px;color:#7c7090;line-height:1.6;}
+.cohort-card{background:#0d0d17;border:1px solid rgba(180,143,255,0.15);border-radius:12px;padding:1.5rem;margin-bottom:16px;transition:border-color 0.25s;}
+.cohort-card:hover{border-color:rgba(180,143,255,0.4);}
+.cohort-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;}
+.cohort-title{font-size:15px;font-weight:500;color:#e0d8f8;}
+.badge{font-family:'Space Mono',monospace;font-size:10px;padding:4px 10px;border-radius:100px;letter-spacing:1px;}
+.badge-open{background:rgba(93,202,138,0.1);border:1px solid rgba(93,202,138,0.3);color:#5dca8a;}
+.badge-full{background:rgba(180,143,255,0.1);border:1px solid rgba(180,143,255,0.3);color:#b48fff;}
+.badge-upcoming{background:rgba(239,159,39,0.1);border:1px solid rgba(239,159,39,0.3);color:#ef9f27;}
+.cohort-meta{display:flex;gap:1.5rem;margin-bottom:0.75rem;flex-wrap:wrap;}
+.cohort-meta span{font-size:12px;color:#7c7090;display:flex;align-items:center;gap:5px;}
+.cohort-meta i{font-size:14px;color:#7c7090;}
+.cohort-desc{font-size:13px;color:#9088a8;line-height:1.6;margin-bottom:1rem;}
+.progress-wrap{margin-top:0.5rem;}
+.progress-label{display:flex;justify-content:space-between;font-size:11px;color:#6b6080;margin-bottom:6px;font-family:'Space Mono',monospace;}
+.progress-bar{height:4px;background:rgba(180,143,255,0.1);border-radius:100px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:100px;background:#7a3fcf;transition:width 0.6s ease;}
+.progress-fill.green-fill{background:#3a9e6a;}
+.proj-card{background:#0d0d17;border:1px solid rgba(93,202,138,0.1);border-radius:12px;padding:1.5rem;margin-bottom:14px;transition:border-color 0.25s;}
+.proj-card:hover{border-color:rgba(93,202,138,0.35);}
+.proj-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;}
+.proj-title{font-size:15px;font-weight:500;color:#e0d8f8;}
+.proj-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:0.75rem;}
+.proj-tag{font-size:10px;font-family:'Space Mono',monospace;padding:3px 10px;border-radius:100px;}
+.proj-tag-g{background:rgba(93,202,138,0.1);color:#5dca8a;border:1px solid rgba(93,202,138,0.25);}
+.proj-tag-p{background:rgba(180,143,255,0.1);color:#b48fff;border:1px solid rgba(180,143,255,0.25);}
+.proj-desc{font-size:13px;color:#9088a8;line-height:1.6;}
+.proj-footer{display:flex;justify-content:space-between;align-items:center;margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.05);}
+.proj-author{font-size:12px;color:#6b6080;display:flex;align-items:center;gap:6px;}
+.avatar{width:22px;height:22px;border-radius:50%;background:rgba(180,143,255,0.2);display:flex;align-items:center;justify-content:center;font-size:10px;color:#b48fff;font-weight:500;}
+.about-section{margin-bottom:3rem;}
+.about-section p{font-size:1rem;line-height:1.85;color:#a89fc0;margin-bottom:1rem;}
+.about-section p strong{color:#e0d8f8;font-weight:500;}
+.quote-block{border-left:2px solid #b48fff;padding:1rem 1.5rem;background:rgba(180,143,255,0.05);border-radius:0 8px 8px 0;margin:1.5rem 0;font-size:0.95rem;color:#c8bcdf;line-height:1.7;font-style:italic;}
+.timeline{position:relative;margin-bottom:2.5rem;}
+.timeline::before{content:'';position:absolute;left:14px;top:0;bottom:0;width:1px;background:rgba(180,143,255,0.3);}
+.tl-item{padding-left:44px;position:relative;margin-bottom:1.75rem;}
+.tl-dot{position:absolute;left:8px;top:4px;width:13px;height:13px;border-radius:50%;background:#08080f;border:2px solid #b48fff;}
+.tl-dot.g{border-color:#5dca8a;}
+.tl-year{font-family:'Space Mono',monospace;font-size:11px;color:#b48fff;margin-bottom:3px;letter-spacing:1px;}
+.tl-item h3{font-size:14px;font-weight:500;color:#e0d8f8;margin-bottom:3px;}
+.tl-item p{font-size:12px;color:#7c7090;line-height:1.6;}
+.cta-box{text-align:center;padding:2.5rem 2rem;background:rgba(180,143,255,0.04);border:1px solid rgba(180,143,255,0.12);border-radius:14px;}
+.cta-box h2{font-size:1.3rem;color:#f0eeff;margin-bottom:0.5rem;font-weight:500;}
+.cta-box p{color:#7c7090;font-size:13px;margin-bottom:1.5rem;}
+.btn-pill{display:inline-block;padding:11px 28px;border-radius:100px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;border:none;background:#7a3fcf;color:#f0eeff;transition:opacity 0.2s,transform 0.2s;}
+.btn-pill:hover{opacity:0.85;transform:translateY(-1px);}
+.auth-overlay{position:fixed;inset:0;background:rgba(8,8,15,0.85);z-index:100;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.auth-overlay.open{opacity:1;pointer-events:all;}
+.auth-modal{background:#0d0d17;border:1px solid rgba(180,143,255,0.2);border-radius:16px;padding:2rem;width:100%;max-width:380px;position:relative;}
+.auth-modal h2{font-family:'Space Mono',monospace;font-size:14px;color:#b48fff;letter-spacing:2px;margin-bottom:0.4rem;}
+.auth-modal p{font-size:12px;color:#6b6080;margin-bottom:1.5rem;}
+.auth-tabs{display:flex;gap:4px;margin-bottom:1.5rem;background:rgba(180,143,255,0.06);border-radius:100px;padding:3px;}
+.auth-tab{flex:1;padding:7px;border:none;background:none;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;color:#7c6fa0;border-radius:100px;cursor:pointer;transition:all 0.2s;}
+.auth-tab.active{background:rgba(180,143,255,0.15);color:#b48fff;}
+.auth-field{margin-bottom:1rem;}
+.auth-field label{display:block;font-size:11px;font-family:'Space Mono',monospace;color:#7c6fa0;letter-spacing:1px;margin-bottom:6px;}
+.auth-field input{width:100%;background:#08080f;border:1px solid rgba(180,143,255,0.15);border-radius:8px;padding:10px 14px;font-family:'Space Grotesk',sans-serif;font-size:14px;color:#e8e8f0;outline:none;transition:border-color 0.2s;}
+.auth-field input:focus{border-color:rgba(180,143,255,0.45);}
+.auth-submit{width:100%;padding:11px;border-radius:100px;border:none;background:#7a3fcf;color:#f0eeff;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;cursor:pointer;transition:opacity 0.2s;margin-top:0.5rem;}
+.auth-submit:hover{opacity:0.85;}
+.auth-submit:disabled{opacity:0.5;cursor:not-allowed;}
+.auth-msg{font-size:12px;margin-top:0.75rem;text-align:center;min-height:18px;}
+.auth-msg.err{color:#f09595;}
+.auth-msg.ok{color:#5dca8a;}
+.auth-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:#6b6080;cursor:pointer;font-size:18px;line-height:1;}
+.auth-close:hover{color:#e0d8f8;}
+.user-pill{display:flex;align-items:center;gap:8px;font-family:'Space Mono',monospace;font-size:11px;color:#b48fff;background:rgba(180,143,255,0.08);border:1px solid rgba(180,143,255,0.2);border-radius:100px;padding:6px 14px;cursor:pointer;transition:background 0.2s;}
+.user-pill:hover{background:rgba(180,143,255,0.15);}
+.sign-in-btn{background:none;border:1px solid rgba(180,143,255,0.3);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;padding:8px 18px;border-radius:100px;cursor:pointer;color:#b48fff;transition:all 0.2s;}
+.sign-in-btn:hover{background:rgba(180,143,255,0.1);}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+<div class="shell">
+  <div class="topbar">
+    <div class="logo-wrap">
+      <span class="logo-name">STEM DISCOVERY</span>
+      <span class="logo-sub">launchpad</span>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" onclick="showPage('home',this)">home</button>
+      <button class="nav-btn" onclick="showPage('cohorts',this)">cohorts</button>
+      <button class="nav-btn" onclick="showPage('projects',this)">projects</button>
+      <button class="nav-btn" onclick="showPage('about',this)">about</button>
+    </nav>
+    <div id="auth-nav">
+      <button class="sign-in-btn" onclick="openAuth()">sign in</button>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="page-home" class="page show">
+    <div class="hero-tag">welcome to the launchpad</div>
+    <h1 class="big">Where curious minds<br><span>launch big ideas.</span></h1>
+    <p class="hero-desc">STEM Discovery Launchpad is a community for students who want to go deeper — join cohorts, build real projects, and connect with others who actually care about science and technology.</p>
+    <div class="stat-row">
+      <div class="stat"><span class="stat-n">6</span><span class="stat-l">active cohorts</span></div>
+      <div class="stat"><span class="stat-n">34</span><span class="stat-l">projects launched</span></div>
+      <div class="stat"><span class="stat-n">120+</span><span class="stat-l">members</span></div>
+    </div>
+    <div class="section-label">explore the launchpad</div>
+    <div class="card-grid">
+      <div class="card" onclick="showPage('cohorts',document.querySelector('[onclick*=cohorts]'))">
+        <i class="ti ti-users card-icon" aria-hidden="true"></i>
+        <h3>Cohorts</h3>
+        <p>Join a group of peers working through the same STEM track together. Applications open now.</p>
+      </div>
+      <div class="card" onclick="showPage('projects',document.querySelector('[onclick*=projects]'))">
+        <i class="ti ti-bulb card-icon" aria-hidden="true"></i>
+        <h3>Projects</h3>
+        <p>Browse what members are building — from bioinformatics tools to robotics simulations.</p>
+      </div>
+      <div class="card" onclick="showPage('about',document.querySelector('[onclick*=about]'))">
+        <i class="ti ti-rocket card-icon" aria-hidden="true"></i>
+        <h3>About</h3>
+        <p>Learn about the mission, the people behind it, and how the launchpad got started.</p>
+      </div>
+    </div>
+    <div class="section-label">latest from the community</div>
+    <div class="proj-card">
+      <div class="proj-header">
+        <span class="proj-title">Antibiotic resistance model v2</span>
+        <span class="badge badge-open">new</span>
+      </div>
+      <div class="proj-tags">
+        <span class="proj-tag proj-tag-g">python</span>
+        <span class="proj-tag proj-tag-p">bioinformatics</span>
+      </div>
+      <p class="proj-desc">Updated simulation now models horizontal gene transfer between bacterial populations. Way more realistic spread curves.</p>
+      <div class="proj-footer">
+        <div class="proj-author"><div class="avatar">JK</div> Jordan K.</div>
+        <span style="font-size:11px;color:#6b6080;font-family:'Space Mono',monospace;">2 days ago</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- COHORTS -->
+  <div id="page-cohorts" class="page">
+    <div class="hero-tag">cohorts</div>
+    <h1 class="big" style="font-size:2rem;margin-bottom:0.75rem;">Find your <span>crew.</span></h1>
+    <p class="hero-desc" style="margin-bottom:2rem;">Each cohort is a focused track — 6 to 8 weeks, a small group, and a real deliverable at the end.</p>
+    <div class="section-label">open now</div>
+    <div class="cohort-card">
+      <div class="cohort-header">
+        <span class="cohort-title">Bioinformatics Foundations</span>
+        <span class="badge badge-open">open</span>
+      </div>
+      <div class="cohort-meta">
+        <span><i class="ti ti-calendar"></i> starts July 7</span>
+        <span><i class="ti ti-users"></i> 4 spots left</span>
+        <span><i class="ti ti-clock"></i> 7 weeks</span>
+      </div>
+      <p class="cohort-desc">Sequence analysis, BLAST, Python for biology. You'll finish with a working gene annotation script and a project writeup.</p>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>enrollment</span><span>8 / 12</span></div>
+        <div class="progress-bar"><div class="progress-fill green-fill" style="width:67%"></div></div>
+      </div>
+    </div>
+    <div class="cohort-card">
+      <div class="cohort-header">
+        <span class="cohort-title">Robotics & Embedded Systems</span>
+        <span class="badge badge-open">open</span>
+      </div>
+      <div class="cohort-meta">
+        <span><i class="ti ti-calendar"></i> starts July 14</span>
+        <span><i class="ti ti-users"></i> 6 spots left</span>
+        <span><i class="ti ti-clock"></i> 6 weeks</span>
+      </div>
+      <p class="cohort-desc">Arduino, sensors, and building robots that actually do something. Final project is a self-correcting line-following bot.</p>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>enrollment</span><span>6 / 12</span></div>
+        <div class="progress-bar"><div class="progress-fill green-fill" style="width:50%"></div></div>
+      </div>
+    </div>
+    <div class="section-label">coming soon</div>
+    <div class="cohort-card">
+      <div class="cohort-header">
+        <span class="cohort-title">Data Science for Scientists</span>
+        <span class="badge badge-upcoming">aug</span>
+      </div>
+      <div class="cohort-meta">
+        <span><i class="ti ti-calendar"></i> starts Aug 4</span>
+        <span><i class="ti ti-users"></i> 12 spots</span>
+        <span><i class="ti ti-clock"></i> 8 weeks</span>
+      </div>
+      <p class="cohort-desc">Pandas, visualizations, and real datasets from published research. Turn raw data into stories that actually mean something.</p>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>waitlist</span><span>3 signed up</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:25%"></div></div>
+      </div>
+    </div>
+    <div class="cohort-card">
+      <div class="cohort-header">
+        <span class="cohort-title">Environmental Chemistry</span>
+        <span class="badge badge-full">full</span>
+      </div>
+      <div class="cohort-meta">
+        <span><i class="ti ti-calendar"></i> in progress</span>
+        <span><i class="ti ti-users"></i> 12 / 12</span>
+        <span><i class="ti ti-clock"></i> 6 weeks</span>
+      </div>
+      <p class="cohort-desc">Water quality analysis, soil sampling, and presenting findings to a real audience. Currently running — next session in fall.</p>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>progress</span><span>week 4 / 6</span></div>
+        <div class="progress-bar"><div class="progress-fill green-fill" style="width:66%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROJECTS -->
+  <div id="page-projects" class="page">
+    <div class="hero-tag">projects</div>
+    <h1 class="big" style="font-size:2rem;margin-bottom:0.75rem;">What we're <span>building.</span></h1>
+    <p class="hero-desc" style="margin-bottom:2rem;">Real work from real members. Nothing polished for show — these are working experiments, tools, and writeups.</p>
+    <div class="section-label">featured projects</div>
+    <div class="proj-card">
+      <div class="proj-header">
+        <span class="proj-title">DNA sequence visualizer</span>
+        <span class="badge badge-open">live</span>
+      </div>
+      <div class="proj-tags">
+        <span class="proj-tag proj-tag-g">javascript</span>
+        <span class="proj-tag proj-tag-g">biology</span>
+        <span class="proj-tag proj-tag-p">web app</span>
+      </div>
+      <p class="proj-desc">Input any gene sequence and watch it animate into a 3D helix with highlighted codons. Built using D3.js and data from NCBI.</p>
+      <div class="proj-footer">
+        <div class="proj-author"><div class="avatar">JK</div> Jordan K.</div>
+        <span style="font-size:11px;color:#6b6080;font-family:'Space Mono',monospace;">bioinformatics cohort</span>
+      </div>
+    </div>
+    <div class="proj-card">
+      <div class="proj-header">
+        <span class="proj-title">Soil pH mapper</span>
+        <span class="badge badge-upcoming">in progress</span>
+      </div>
+      <div class="proj-tags">
+        <span class="proj-tag proj-tag-g">python</span>
+        <span class="proj-tag proj-tag-p">data viz</span>
+        <span class="proj-tag proj-tag-g">field work</span>
+      </div>
+      <p class="proj-desc">Collected 40+ soil samples across 3 local parks. Building a heatmap overlay to show pH variation and correlate with plant species density.</p>
+      <div class="proj-footer">
+        <div class="proj-author"><div class="avatar">AM</div> Aisha M.</div>
+        <span style="font-size:11px;color:#6b6080;font-family:'Space Mono',monospace;">env. chemistry cohort</span>
+      </div>
+    </div>
+    <div class="proj-card">
+      <div class="proj-header">
+        <span class="proj-title">Adaptive line-follower bot</span>
+        <span class="badge badge-open">complete</span>
+      </div>
+      <div class="proj-tags">
+        <span class="proj-tag proj-tag-p">arduino</span>
+        <span class="proj-tag proj-tag-g">robotics</span>
+        <span class="proj-tag proj-tag-p">c++</span>
+      </div>
+      <p class="proj-desc">A robot that adjusts its turning radius based on past errors using a simple feedback loop. Finished the course 30% faster than the baseline model.</p>
+      <div class="proj-footer">
+        <div class="proj-author"><div class="avatar">RC</div> Ryan C.</div>
+        <span style="font-size:11px;color:#6b6080;font-family:'Space Mono',monospace;">robotics cohort</span>
+      </div>
+    </div>
+    <div class="proj-card">
+      <div class="proj-header">
+        <span class="proj-title">Protein folding prediction tool</span>
+        <span class="badge badge-upcoming">wip</span>
+      </div>
+      <div class="proj-tags">
+        <span class="proj-tag proj-tag-g">python</span>
+        <span class="proj-tag proj-tag-p">ML</span>
+        <span class="proj-tag proj-tag-g">biochem</span>
+      </div>
+      <p class="proj-desc">Using a simplified energy minimization model to predict secondary structure from amino acid sequences. Still getting the alpha helix detection right.</p>
+      <div class="proj-footer">
+        <div class="proj-author"><div class="avatar">TP</div> Talia P.</div>
+        <span style="font-size:11px;color:#6b6080;font-family:'Space Mono',monospace;">independent</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div id="page-about" class="page">
+    <div class="hero-tag">about</div>
+    <h1 class="big" style="font-size:2rem;margin-bottom:0.75rem;">Built by students,<br><span>for students.</span></h1>
+    <p class="hero-desc" style="margin-bottom:2rem;">STEM Discovery Launchpad started as a frustration — science classes felt disconnected from actual science. So we built the thing we wished existed.</p>
+    <div class="about-section">
+      <div class="section-label">the mission</div>
+      <p>Most STEM programs are about <strong>covering curriculum</strong>. We're about something different — building a place where students do real work, ask uncomfortable questions, and actually ship things.</p>
+      <p>Whether you're pipetting DNA in a lab or debugging a Python script at midnight, the Launchpad is your space to go deeper than a classroom will let you.</p>
+      <div class="quote-block">"We didn't want another program that looks good on a resume. We wanted one that changes how you think."</div>
+    </div>
+    <div class="about-section">
+      <div class="section-label">how it started</div>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-year">2022</div>
+          <h3>The frustration</h3>
+          <p>Three students. One science fair. A lot of "why isn't there a real community for this?"</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot g"></div>
+          <div class="tl-year">2023</div>
+          <h3>First cohort</h3>
+          <p>8 members, a bioinformatics track, and a Discord server. Scrappy but real.</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-year">2024</div>
+          <h3>Grew to 60+ members</h3>
+          <p>Added robotics, chemistry, and data science tracks. Projects started getting published.</p>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot g"></div>
+          <div class="tl-year">now</div>
+          <h3>120+ members, 6 cohorts</h3>
+          <p>Still student-run, still free, still figuring it out as we go.</p>
+        </div>
+      </div>
+    </div>
+    <div class="cta-box">
+      <h2>Ready to launch something?</h2>
+      <p>Applications for summer cohorts are open now — no experience required, just curiosity.</p>
+      <button class="btn-pill" onclick="showPage('cohorts',document.querySelector('[onclick*=cohorts]'))">browse cohorts →</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- AUTH MODAL -->
+<div class="auth-overlay" id="auth-overlay" onclick="handleOverlayClick(event)">
+  <div class="auth-modal">
+    <button class="auth-close" onclick="closeAuth()" aria-label="Close">&times;</button>
+    <h2>STEM DISCOVERY</h2>
+    <p>Join the launchpad community</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">sign in</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">sign up</button>
+    </div>
+    <div id="auth-form-login">
+      <div class="auth-field"><label>email</label><input type="email" id="login-email" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="auth-field"><label>password</label><input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="auth-submit" id="login-btn" onclick="doLogin()">sign in →</button>
+    </div>
+    <div id="auth-form-signup" style="display:none"><div class="auth-field"><label>full name</label><input type="text" id="signup-name" placeholder="your name" autocomplete="name"></div>
+      <div class="auth-field"><label>email</label><input type="email" id="signup-email" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="auth-field"><label>password</label><input type="password" id="signup-password" placeholder="min 6 characters" autocomplete="new-password"></div>
+      <button class="auth-submit" id="signup-btn" onclick="doSignup()">create account →</button>
+    </div>
+    <div class="auth-msg" id="auth-msg"></div>
+  </div>
+</div>
+
+<script>
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('show'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('show');
+  if (btn) btn.classList.add('active');
+}
+
+const canvas = document.getElementById('bg');
+const ctx = canvas.getContext('2d');
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+let t = 0;
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const cols = Math.ceil(canvas.width / 200);
+  for (let c = 0; c < cols; c++) {
+    const cx = c * 200 + 100;
+    const sp = 0.012 + c * 0.002;
+    const off = c * 1.5;
+    const p1 = [], p2 = [];
+    for (let y = -40; y < canvas.height + 40; y += 12) {
+      const w = Math.sin((y * 0.016) + t * sp + off) * 30;
+      p1.push({x: cx + w, y}); p2.push({x: cx - w, y});
+    }
+    ctx.beginPath(); p1.forEach((p,i) => i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+    ctx.strokeStyle='#7a3fcf'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.beginPath(); p2.forEach((p,i) => i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+    ctx.strokeStyle='#3a9e6a'; ctx.lineWidth=1.5; ctx.stroke();
+    for (let i = 0; i < p1.length; i += 4) {
+      ctx.beginPath(); ctx.moveTo(p1[i].x,p1[i].y); ctx.lineTo(p2[i].x,p2[i].y);
+      ctx.strokeStyle='rgba(160,120,220,0.4)'; ctx.lineWidth=0.8; ctx.stroke();
+      ctx.beginPath(); ctx.arc(p1[i].x,p1[i].y,2,0,Math.PI*2); ctx.fillStyle='#b48fff'; ctx.fill();
+      ctx.beginPath(); ctx.arc(p2[i].x,p2[i].y,2,0,Math.PI*2); ctx.fillStyle='#5dca8a'; ctx.fill();
+    }
+  }
+  t++;
+  requestAnimationFrame(draw);
+}
+draw();
+
+// --- Supabase auth ---
+const SUPABASE_URL = 'https://cvwgfpybwouqazuoxghu.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2d2dmcHlid291cWF6dW94Z2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0MDM0MDMsImV4cCI6MjA5Njk3OTQwM30.ba_5ZF1Yp-TBfDdUI_cy4tcjbFG0M66K1pD2gxhLMgA';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function openAuth() { document.getElementById('auth-overlay').classList.add('open'); setMsg('',''); }
+function closeAuth() { document.getElementById('auth-overlay').classList.remove('open'); }
+function handleOverlayClick(e) { if (e.target === document.getElementById('auth-overlay')) closeAuth(); }
+
+function switchTab(tab) {
+  document.getElementById('auth-form-login').style.display = tab === 'login' ? '' : 'none';
+  document.getElementById('auth-form-signup').style.display = tab === 'signup' ? '' : 'none';
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+  setMsg('', '');
+}
+
+function setMsg(text, type) {
+  const el = document.getElementById('auth-msg');
+  el.textContent = text;
+  el.className = 'auth-msg' + (type ? ' ' + type : '');
+}
+
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.textContent = loading ? 'please wait...' : (btnId === 'login-btn' ? 'sign in →' : 'create account →');
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!name) { setMsg('please enter your name', 'err'); return; }
+  if (!email || !password) { setMsg('please fill in both fields', 'err'); return; }
+  setLoading('login-btn', true);
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  setLoading('login-btn', false);
+  if (error) { setMsg(error.message, 'err'); }
+  else { setMsg('signed in!', 'ok'); setTimeout(closeAuth, 800); }
+}
+
+async function doSignup() {
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  if (!name) { setMsg('please enter your name', 'err'); return; }
+  if (!email || !password) { setMsg('please fill in both fields', 'err'); return; }
+  if (password.length < 6) { setMsg('password must be at least 6 characters', 'err'); return; }
+  setLoading('signup-btn', true);
+  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { full_name: name } } });
+  setLoading('signup-btn', false);
+  if (error) { setMsg(error.message, 'err'); }
+  else { setMsg('account created! you can now sign in.', 'ok'); setTimeout(closeAuth, 1200); }
+}
+
+function updateAuthNav(user) {
+  const nav = document.getElementById('auth-nav');
+  if (user) {
+    const initials = user.email.slice(0,2).toUpperCase();
+    nav.innerHTML = `<div class="user-pill" onclick="doSignOut()"><div class="avatar" style="width:20px;height:20px;font-size:9px;">${initials}</div>${user.email.split('@')[0]} · sign out</div>`;
+  } else {
+    nav.innerHTML = `<button class="sign-in-btn" onclick="openAuth()">sign in</button>`;
+  }
+}
+
+async function doSignOut() {
+  await sb.auth.signOut();
+}
+
+sb.auth.getSession().then(({ data }) => updateAuthNav(data.session?.user ?? null));
+sb.auth.onAuthStateChange((_event, session) => updateAuthNav(session?.user ?? null));
+</script>
+</body>
+</html>
