@@ -10,7 +10,6 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Space Grotesk',sans-serif;background:#08080f;color:#e8e8f0;min-height:100vh;overflow-x:hidden;}
-canvas#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:0.3;pointer-events:none;}
 .shell{position:relative;z-index:2;}
 .topbar{display:flex;justify-content:space-between;align-items:center;padding:1.2rem 2rem;border-bottom:1px solid rgba(180,143,255,0.12);}
 .logo-wrap{display:flex;flex-direction:column;}
@@ -115,8 +114,8 @@ h1.big span{color:#5dca8a;}
 </head>
 <body>
 
-<canvas id="bg"></canvas>
-<div class="shell">
+
+  <div class="shell">
   <div class="topbar">
     <div class="logo-wrap">
       <span class="logo-name">STEM DISCOVERY</span>
@@ -405,39 +404,6 @@ function showPage(id, btn) {
   if (btn) btn.classList.add('active');
 }
 
-const canvas = document.getElementById('bg');
-const ctx = canvas.getContext('2d');
-function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-resize();
-window.addEventListener('resize', resize);
-let t = 0;
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const cols = Math.ceil(canvas.width / 200);
-  for (let c = 0; c < cols; c++) {
-    const cx = c * 200 + 100;
-    const sp = 0.012 + c * 0.002;
-    const off = c * 1.5;
-    const p1 = [], p2 = [];
-    for (let y = -40; y < canvas.height + 40; y += 12) {
-      const w = Math.sin((y * 0.016) + t * sp + off) * 30;
-      p1.push({x: cx + w, y}); p2.push({x: cx - w, y});
-    }
-    ctx.beginPath(); p1.forEach((p,i) => i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
-    ctx.strokeStyle='#7a3fcf'; ctx.lineWidth=1.5; ctx.stroke();
-    ctx.beginPath(); p2.forEach((p,i) => i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
-    ctx.strokeStyle='#3a9e6a'; ctx.lineWidth=1.5; ctx.stroke();
-    for (let i = 0; i < p1.length; i += 4) {
-      ctx.beginPath(); ctx.moveTo(p1[i].x,p1[i].y); ctx.lineTo(p2[i].x,p2[i].y);
-      ctx.strokeStyle='rgba(160,120,220,0.4)'; ctx.lineWidth=0.8; ctx.stroke();
-      ctx.beginPath(); ctx.arc(p1[i].x,p1[i].y,2,0,Math.PI*2); ctx.fillStyle='#b48fff'; ctx.fill();
-      ctx.beginPath(); ctx.arc(p2[i].x,p2[i].y,2,0,Math.PI*2); ctx.fillStyle='#5dca8a'; ctx.fill();
-    }
-  }
-  t++;
-  requestAnimationFrame(draw);
-}
-draw();
 
 // --- Supabase auth ---
 const SUPABASE_URL = 'https://tsivgciblxzrfthslfco.supabase.co';
